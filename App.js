@@ -1,6 +1,6 @@
 import React from "react";
 import { AuthContextProvider, useAuth } from "./src/AuthContext";
-import Navigator from "./src/navigation/navigator"
+import Navigator from "./src/navigation/navigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
   DarkTheme,
@@ -15,7 +15,6 @@ import { RootSiblingParent } from "react-native-root-siblings";
 import ThemeContextProvider from "./src/ThemeContext";
 import { LogBox } from "react-native";
 import { useTheme } from "./src/ThemeContext";
-// import { MessagesCacheProvider } from "./src/LoadOfflineMessages";
 import DarkMode from "./src/Themes/DarkMode";
 
 const App = () => {
@@ -26,9 +25,7 @@ const App = () => {
           <ThemeContextProvider>
             <MenuProvider>
               <SafeAreaProvider>
-                {/* <MessagesCacheProvider> */}
-                  <AppContent />
-                {/* </MessagesCacheProvider> */}
+                <AppContent />
               </SafeAreaProvider>
             </MenuProvider>
           </ThemeContextProvider>
@@ -52,7 +49,6 @@ const AppContent = () => {
       }}
     >
       <NavigationContainer
-        independent={true}
         theme={selectedTheme === DarkMode ? DarkTheme : DefaultTheme}
       >
         {console.log("isAuthenticated", isAuthenticated)}
