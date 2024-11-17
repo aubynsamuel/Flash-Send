@@ -32,7 +32,7 @@ export const AuthContextProvider = ({ children }) => {
 
   const ToastMessage = (message) => {
     Toast.show(message, {
-      duration: Toast.durations.SHORT,
+      duration: Toast.durations.LONG,
       hideOnPress: true,
       containerStyle: {
         width: wp("80%"),

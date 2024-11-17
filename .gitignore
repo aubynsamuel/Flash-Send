@@ -55,5 +55,5 @@ yarn-error.*
 expo-env.d.ts
 # @end expo-cli
 
-env
-android/app/google-services.json
+# env
+# android/app/google-services.json
