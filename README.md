@@ -11,7 +11,7 @@ Welcome to the **Real-Time Chat Application** built using **React Native** and *
 - **Real-Time Messaging**: Send and receive messages instantly with the help of Firebase Firestore.
 - **User Authentication**: Secure login and sign-up system using Firebase Authentication.
 - **Cached Messages**: Store and retrieve messages locally to allow offline access.
-- **Profile Picture Handling**: Each user can set a profile picture that displays in chats.
+- **Profile Picture Handling**: Each user can set a profile picture displayed in chats.
 - **Unread Message Count**: Keep track of unread messages for each conversation.
 - **Smooth UI and UX**: A user-friendly interface with smooth transitions and responsive layouts.
 - **Status Indicators**: Display the last message sent, message timestamps, and user activity status.
@@ -35,7 +35,7 @@ Welcome to the **Real-Time Chat Application** built using **React Native** and *
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/aubynsamuel/Chat-App.git
+   git clone https://github.com/aubynsamuel/React-Native-Chat-App.git
    cd chat-app
    ```
 
