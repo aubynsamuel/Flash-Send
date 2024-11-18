@@ -5,7 +5,7 @@ import { deviceToken } from './services/ExpoPushNotifications';
 
 const expoPushTokenRegex = /^ExponentPushToken\[[a-zA-Z0-9-_]+\]$/;
 
-const FCMTokenManager = {
+const NotificationTokenManager = {
   // Initialize and check for token changes
   async initializeAndUpdateToken(userId) {
     try {
@@ -68,4 +68,4 @@ const FCMTokenManager = {
   },
 };
 
-export default FCMTokenManager;
+export default NotificationTokenManager;

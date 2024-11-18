@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Animated } from 'react-native';
+import { View, Text } from 'react-native';
 import { formatDate } from '../../commons';
 
 const FloatingDateHeader = ({ visible, timestamp, theme }) => {

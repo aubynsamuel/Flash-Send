@@ -15,7 +15,7 @@ import {
 import { usersRef, db } from "../../env/firebaseConfig";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import FCMTokenManager from "../FCMTokenManager";
+import NotificationTokenManager from "../NotificationTokenManager";
 import { MaterialIcons } from "@expo/vector-icons";
 import getStyles from "./sreen_Styles";
 import { useTheme } from "../ThemeContext";
@@ -31,7 +31,7 @@ function HomeScreen() {
   const styles = getStyles(selectedTheme);
 
   useEffect(() => {
-    FCMTokenManager.initializeAndUpdateToken(user?.userId);
+    NotificationTokenManager.initializeAndUpdateToken(user?.userId);
   }, [user]);
 
   useEffect(() => {

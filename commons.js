@@ -1,8 +1,8 @@
-import {Timestamp} from 'firebase/firestore';
+import { Timestamp } from "firebase/firestore";
 
 export const getRoomId = (userId1, userId2) => {
   const sortedIds = [userId1, userId2].sort();
-  const roomId = sortedIds.join('_');
+  const roomId = sortedIds.join("_");
   return roomId;
 };
 
@@ -11,7 +11,7 @@ export const getCurrentTime = () => {
   return now;
 };
 
-export const formatDate = firestoreTimestamp => {
+export const formatDate = (firestoreTimestamp) => {
   // Extract seconds from Firestore Timestamp
   const seconds = firestoreTimestamp.seconds;
 
@@ -25,30 +25,30 @@ export const formatDate = firestoreTimestamp => {
   const year = date.getUTCFullYear();
 
   const formattedDayOfTheWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ]
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
   // Format day, date, month, and year
-  const formattedDay = day.toString().padStart(2, '0');
+  const formattedDay = day.toString().padStart(2, "0");
   // const formattedMonth = month.toString().padStart(2, '0');
   const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   let formattedDate;
 
@@ -62,13 +62,15 @@ export const formatDate = firestoreTimestamp => {
   } else if (formattedDay == currentDay) {
     formattedDate = `Today`;
   } else {
-    formattedDate = `${formattedDayOfTheWeek[dayOfTheWeek - 1]} ${formattedDay} ${months[month]}, ${year}`;
+    formattedDate = `${
+      formattedDayOfTheWeek[dayOfTheWeek - 1]
+    } ${formattedDay} ${months[month]}, ${year}`;
   }
 
   return formattedDate;
 };
 
-export const formatTimeWithoutSeconds = firestoreTimestamp => {
+export const formatTimeWithoutSeconds = (firestoreTimestamp) => {
   // Extract seconds from Firestore Timestamp
   const seconds = firestoreTimestamp.seconds;
 
@@ -80,13 +82,13 @@ export const formatTimeWithoutSeconds = firestoreTimestamp => {
   const minutes = date.getUTCMinutes();
 
   // Determine AM or PM period
-  const period = hours >= 12 ? 'pm' : 'am';
+  const period = hours >= 12 ? "pm" : "am";
 
   // Convert 24-hour time to 12-hour format
   hours = hours % 12 || 12;
 
   // Format hours and minutes
-  const formattedMinutes = minutes.toString().padStart(2, '0');
+  const formattedMinutes = minutes.toString().padStart(2, "0");
   const formattedTime = `${hours}:${formattedMinutes} ${period}`;
 
   return formattedTime;
