@@ -8,8 +8,6 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../env/firebaseConfig";
 import { deviceToken } from "./services/ExpoPushNotifications";
-import Toast from "react-native-root-toast";
-import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 import storage from "./Functions/Storage";
 
 // Create Authentication Context
@@ -29,21 +27,11 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState("");
 
-  const ToastMessage = (message) => {
-    Toast.show(message, {
-      duration: Toast.durations.LONG,
-      hideOnPress: true,
-      containerStyle: {
-        width: wp("80%"),
-        padding: 12,
-        borderRadius: 10,
-        backgroundColor: "#414141",
-        top: -30,
-        alignSelf: "center",
-        borderRadius: 40,
-      },
-    });
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(""), 3000);
   };
 
   // Initialize auth state from storage
@@ -258,7 +246,8 @@ export const AuthContextProvider = ({ children }) => {
         isLoading,
         updateProfile,
         resetPassword,
-        ToastMessage,
+        showToast, 
+        toastMessage
       }}
     >
       {children}

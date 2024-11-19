@@ -17,7 +17,7 @@ import { StatusBar } from "expo-status-bar";
 
 
 const LoginScreen = () => {
-  const { login, resetPassword, ToastMessage } = useAuth();
+  const { login, resetPassword, showToast } = useAuth();
   const email = useRef("");
   const password = useRef("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,15 +31,15 @@ const LoginScreen = () => {
   // Handle forgot password
   const handleForgotPassword = async () => {
     if (!email.current) {
-      ToastMessage("Please enter your email address");
+      showToast("Please enter your email address");
       return;
     }
 
     const response = await resetPassword(email.current);
     if (response.success) {
-      ToastMessage("A password reset link has been sent to your email address");
+      showToast("A password reset link has been sent to your email address");
     } else {
-      ToastMessage(response.msg);
+      showToast(response.msg);
       console.log(response);
     }
   };
@@ -47,13 +47,13 @@ const LoginScreen = () => {
   const handleLoginPressed = async () => {
     setIsLoading(true);
     if (!email.current || !password.current) {
-      ToastMessage("Please enter your email and password");
+      showToast("Please enter your email and password");
       setIsLoading(false);
       return;
     }
     const response = await login(email.current, password.current);
     if (!response.success) {
-      ToastMessage(response.msg);
+      showToast(response.msg);
       console.log(response);
       setIsLoading(false);
       return;
@@ -157,7 +157,7 @@ const LoginScreen = () => {
           <Text style={styles.lsDontHaveAnAccount}>
             Don't have an account?{" "}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Sign Up")}>
+          <TouchableOpacity onPress={() => navigation.replace("Sign Up")}>
             <Text style={styles.lsSignUp}>Sign up</Text>
           </TouchableOpacity>
         </View>

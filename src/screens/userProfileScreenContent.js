@@ -16,7 +16,7 @@ import { StatusBar } from "expo-status-bar";
 import { launchImageLibrary } from "react-native-image-picker";
 
 const UserProfileContent = ({ children }) => {
-  const { user, logout, ToastMessage } = useAuth();
+  const { user, logout, showToast } = useAuth();
   const navigation = useNavigation();
   const profileUrl = user?.profileUrl;
   const [imageFailed, setImageFailed] = useState(false);
@@ -48,11 +48,11 @@ const UserProfileContent = ({ children }) => {
         const selectedImage = response.assets[0].uri;
         console.log("ImagePicker Selected: ", selectedImage);
         await changeBackgroundPic(selectedImage);
-        ToastMessage("Chat Background Changed Successfully");
+        showToast("Chat Background Changed Successfully");
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      ToastMessage("Failed to change chat background");
+      showToast("Failed to change chat background");
     }
   };
 

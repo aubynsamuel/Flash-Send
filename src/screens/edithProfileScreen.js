@@ -23,7 +23,7 @@ import { useTheme } from "../ThemeContext";
 import { StatusBar } from "expo-status-bar";
 
 const EditProfileScreen = () => {
-  const { user, updateProfile, ToastMessage } = useAuth();
+  const { user, updateProfile, showToast } = useAuth();
   const [username, setUsername] = useState(user.username || "");
   const [profileUrl, setProfileUrl] = useState(user.profileUrl || null);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ const EditProfileScreen = () => {
     setIsLoading(true);
 
     if (!username) {
-      ToastMessage("Username cannot be empty");
+      showToast("Username cannot be empty");
       setIsLoading(false);
       return;
     }
@@ -86,7 +86,7 @@ const EditProfileScreen = () => {
           },
           (error) => {
             console.error("Upload failed:", error.message);
-            ToastMessage("Picture Could Not Be Uploaded");
+            showToast("Picture Could Not Be Uploaded");
             setIsLoading(false);
           },
           async () => {
@@ -99,9 +99,9 @@ const EditProfileScreen = () => {
             });
 
             if (!response.success) {
-              Toast(response.msg);
+              showToast(response.msg);
             } else {
-              ToastMessage("Profile updated successfully!");
+              showToast("Profile updated successfully!");
             }
             setIsLoading(false);
           }
@@ -109,15 +109,15 @@ const EditProfileScreen = () => {
       } else {
         const response = await updateProfile({ username, profileUrl });
         if (!response.success) {
-          ToastMessage(response.msg);
+          showToast(response.msg);
         } else {
-          ToastMessage("Profile updated successfully!");
+          showToast("Profile updated successfully!");
         }
         setIsLoading(false);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      ToastMessage("Failed to update profile");
+      showToast("Failed to update profile");
       setIsLoading(false);
     }
   };

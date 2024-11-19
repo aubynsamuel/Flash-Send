@@ -11,15 +11,14 @@ import { MenuProvider } from "react-native-popup-menu";
 import changeNavigationBarColor from "react-native-navigation-bar-color";
 import ExpoPushNotifications from "./src/services/ExpoPushNotifications";
 import { View } from "react-native";
-import { RootSiblingParent } from "react-native-root-siblings";
 import ThemeContextProvider from "./src/ThemeContext";
 import { LogBox } from "react-native";
 import { useTheme } from "./src/ThemeContext";
 import DarkMode from "./src/Themes/DarkMode";
+import Toast from "./src/components/ToastMessage";
 
 const App = () => {
   return (
-    <RootSiblingParent>
       <AuthContextProvider>
           <ExpoPushNotifications>
             <ThemeContextProvider>
@@ -31,13 +30,12 @@ const App = () => {
             </ThemeContextProvider>
           </ExpoPushNotifications>
       </AuthContextProvider>
-    </RootSiblingParent>
   );
 };
 
 const AppContent = () => {
   LogBox.ignoreAllLogs(); // Ignore all logs
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, toastMessage} = useAuth();
   const { selectedTheme } = useTheme();
 
   return (
@@ -54,6 +52,7 @@ const AppContent = () => {
         {console.log("isAuthenticated", isAuthenticated)}
         <Navigator />
         {changeNavigationBarColor(selectedTheme.background)}
+        <Toast message={toastMessage} duration={2500} />
       </NavigationContainer>
     </View>
   );

@@ -25,7 +25,7 @@ const SignUpScreen = () => {
   const email = useRef("");
   const username = useRef("");
   const password = useRef("");
-  const { signUp, ToastMessage } = useAuth();
+  const { signUp, showToast } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { selectedTheme } = useTheme();
   const [passwordReveal, setPasswordReveal] = useState(true);
@@ -65,14 +65,14 @@ const SignUpScreen = () => {
   const handleSignUpPressed = async () => {
     setIsLoading(true);
     if (!email.current || !username.current || !password.current) {
-      ToastMessage("Please fill all the required fields.");
+      showToast("Please fill all the required fields.");
       setIsLoading(false);
       return;
     }
 
     // Email format validation
     if (!emailRegex.test(email.current)) {
-      ToastMessage("Please enter a valid email address.");
+      showToast("Please enter a valid email address.");
       setIsLoading(false);
       return;
     }
@@ -119,11 +119,11 @@ const SignUpScreen = () => {
       if (response.success) {
         navigation.replace("Home");
       } else {
-        ToastMessage(response.msg || "An unexpected error occurred.");
+        showToast(response.msg || "An unexpected error occurred.");
       }
     } catch (error) {
       console.error("Error signing up:", error);
-      ToastMessage("An error occurred during sign up. Please try again later.");
+      showToast("An error occurred during sign up. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +255,7 @@ const SignUpScreen = () => {
           style={{ flexDirection: "row", alignSelf: "center", marginTop: 5 }}
         >
           <Text style={styles.suHaveAnAccount}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+          <TouchableOpacity onPress={() => navigation.replace("Login")}>
             <Text style={styles.suLoginText}>Login</Text>
           </TouchableOpacity>
         </View>
