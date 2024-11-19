@@ -51,7 +51,7 @@ const ChatScreen = () => {
   const { selectedTheme, chatBackgroundPic } = useTheme();
   const styles = getStyles(selectedTheme);
   const [messages, setMessages] = useState([]);
-  const flatListRef = useRef(null);
+  const sectionListRef = useRef(null);
   const [inputText, setInputText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
@@ -60,12 +60,13 @@ const ChatScreen = () => {
   const [scrollToEnButton, setScrollToEnButton] = useState(true);
   const [renderEmptyComponent, setRenderEmptyComponent] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
-  const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
+  // Uncomment to set first unread message as initial scroll position
+  // const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
   const roomId = useMemo(
     () => getRoomId(user.userId, userId),
     [userId, user.userId]
   );
-  const [cacheMessagesLength, setCachedMessagesLength] = useState();
+  // const [cacheMessagesLength, setCachedMessagesLength] = useState();
 
   // Initialize Chat Room
   useEffect(() => {
@@ -73,21 +74,21 @@ const ChatScreen = () => {
       try {
         const cachedMessages = storage.getString(`messages_${roomId}`);
         const parseCacheMessages = JSON.parse(cachedMessages);
-        setCachedMessagesLength(parseCacheMessages.length);
+        // setCachedMessagesLength(parseCacheMessages.length);
         if (parseCacheMessages) {
           setMessages(parseCacheMessages);
-          console.log(
-            `${cacheMessagesLength} Messages retrieved from storage successfully`
-          );
+          // console.log(
+          //   `${cacheMessagesLength} Messages retrieved from storage successfully`
+          // );
         }
       } catch (error) {
         console.error("Failed to fetch cached messages", error);
       }
     };
 
-    const cacheMessages = (newMessages) => {
+    const cacheMessages = async (newMessages) => {
       try {
-        if (newMessages?.length) {
+        if (newMessages.length > 0) {
           storage.set(`messages_${roomId}`, JSON.stringify(newMessages));
           console.log("New messages cached successfully");
         }
@@ -109,12 +110,12 @@ const ChatScreen = () => {
           }));
           if (allMessages !== null && allMessages.length > 0) {
             setMessages(allMessages);
-            console.log(
-              `${allMessages.length} messages fetched from firebase and loaded successfully`
-            );
+            cacheMessages(allMessages);
+            // console.log(
+            //   `${allMessages.length} messages fetched from firebase and loaded successfully`
+            // );
           }
           updateScrollToEnd();
-          cacheMessages(messages);
         });
       } catch (error) {
         console.error("failed to subscribe to firebase " + error);
@@ -123,7 +124,7 @@ const ChatScreen = () => {
 
     const initializeChat = async () => {
       await fetchCachedMessages();
-      await createRoomIfItDoesNotExist(); // Ensure this function exists and is efficient
+      await createRoomIfItDoesNotExist();
       const unsubscribe = subscribeToMessages();
 
       return () => {
@@ -142,25 +143,25 @@ const ChatScreen = () => {
       if (cleanupListeners) cleanupListeners;
       keyboardListener.remove();
     };
-  }, [roomId]);
+  }, []);
 
-  const findFirstUnreadMessageIndex = useCallback(
-    (messages) => {
-      return messages.findIndex(
-        (msg) => !msg.read && msg.senderId !== user?.userId
-      );
-    },
-    [user?.userId]
-  );
+  // const findFirstUnreadMessageIndex = useCallback(
+  //   (messages) => {
+  //     return messages.findIndex(
+  //       (msg) => !msg.read && msg.senderId !== user?.userId
+  //     );
+  //   },
+  //   [user?.userId]
+  // );
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      const index = findFirstUnreadMessageIndex(messages);
-      if (index !== -1) {
-        setFirstUnreadIndex(index);
-      }
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (messages.length > 0) {
+  //     const index = findFirstUnreadMessageIndex(messages);
+  //     if (index !== -1) {
+  //       setFirstUnreadIndex(index);
+  //     }
+  //   }
+  // }, [messages]);
 
   const messagesSections = useMemo(() => {
     if (!messages.length) return [];
@@ -190,7 +191,9 @@ const ChatScreen = () => {
   }, [messages]);
 
   useEffect(() => {
-    setTimeout(() => setRenderEmptyComponent(true), 1500);
+    if (messages.length <= 0) {
+      setTimeout(() => setRenderEmptyComponent(true), 1500);
+    }
     createRoomIfItDoesNotExist();
     fetchOtherUserToken();
   }, []);
@@ -243,9 +246,9 @@ const ChatScreen = () => {
 
   const updateScrollToEnd = () => {
     setTimeout(() => {
-      if (flatListRef.current && messagesSections.length > 0) {
+      if (sectionListRef.current && messagesSections.length > 0) {
         const lastSection = messagesSections[messagesSections.length - 1];
-        flatListRef.current.scrollToLocation({
+        sectionListRef.current.scrollToLocation({
           sectionIndex: messagesSections.length - 1,
           itemIndex: lastSection.data.length - 1,
           viewPosition: 0.5,
@@ -268,13 +271,13 @@ const ChatScreen = () => {
       }
     });
 
-    if (sectionIndex !== -1 && itemIndex !== -1 && flatListRef.current) {
+    if (sectionIndex !== -1 && itemIndex !== -1 && sectionListRef.current) {
       // console.log(`sectionIndex, itemIndex = ${sectionIndex}, ${itemIndex}`);
       setHighlightedMessageId(messageId);
-      flatListRef.current.scrollToLocation({
+      sectionListRef.current.scrollToLocation({
         sectionIndex: sectionIndex,
         itemIndex: itemIndex,
-        viewPosition: 0.2,
+        viewPosition: 0.5,
         animated: true,
       });
     }
@@ -463,11 +466,11 @@ const ChatScreen = () => {
   );
 
   const handleEdit = (message) => {
+    inputRef.current.focus();
     setScrollToEnButton(false);
     cancelReply();
     setEditingMessage(message);
     setInputText(message.content);
-    inputRef.current?.focus();
   };
 
   const cancelEditing = () => {
@@ -535,6 +538,7 @@ const ChatScreen = () => {
   };
 
   const handleReply = (message) => {
+    inputRef.current.focus();
     setScrollToEnButton(false);
     cancelEditing();
     setReplyTo({
@@ -543,18 +547,18 @@ const ChatScreen = () => {
       senderId: message.senderId,
       senderName: message.senderName,
     });
-    inputRef.current?.focus();
   };
 
   const cancelReply = () => {
     setReplyTo(null);
   };
 
-  const getItemLayout = (data, index) => ({
-    length: 100,
-    offset: 100 * index,
-    index,
-  });
+  // Uncomment to help scroll to first unread message
+  // const getItemLayout = (data, index) => ({
+  //   length: 100,
+  //   offset: 100 * index,
+  //   index,
+  // });
 
   return (
     <View
@@ -586,7 +590,7 @@ const ChatScreen = () => {
       </View>
       <View style={styles.crContainer}>
         <SectionList
-          ref={flatListRef}
+          ref={sectionListRef}
           sections={messagesSections}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
@@ -602,15 +606,12 @@ const ChatScreen = () => {
           onContentSizeChange={updateScrollToEnd}
           onScrollBeginDrag={() => setScrollToEnButton(true)}
           onEndReached={() => setScrollToEnButton(false)}
-          onScrollToIndexFailed={(info) => {
-            const wait = new Promise((resolve) => setTimeout(resolve, 500));
-            wait.then(() => {
-              flatListRef.current?.scrollToIndex({
-                index: info.index,
-                animated: true,
-              });
-            });
-          }}
+          //Uncomment to aid initial scroll to index
+          // getItemLayout={getItemLayout}
+          // initialScrollIndex={
+          //   firstUnreadIndex !== null ? firstUnreadIndex : messages.length - 1
+          // }
+          onScrollToIndexFailed={updateScrollToEnd}
           ListEmptyComponent={renderEmptyComponent && <EmptyChatRoomList />}
         />
         {scrollToEnButton && (
@@ -662,7 +663,6 @@ const ChatScreen = () => {
             ref={inputRef}
             value={inputText}
             onChangeText={(text) => {
-              // setIsTyping(true);
               setInputText(text);
             }}
             style={styles.crTextInputField}
@@ -673,7 +673,7 @@ const ChatScreen = () => {
             numberOfLines={6}
             multiline={true}
           />
-          <TouchableOpacity onPress={handleSend} style={styles.crSendButton}>
+          <TouchableOpacity onPress={handleSend} style={styles.crSendButton} activeOpacity={0.1}>
             <MaterialIcons
               name="send"
               color={selectedTheme.text.primary}

@@ -22,7 +22,7 @@ const SearchUsersScreen = () => {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const { selectedTheme, changeTheme } = useTheme();
+  const { selectedTheme } = useTheme();
   const styles = getStyles(selectedTheme);
 
   const handleSearch = async (text) => {

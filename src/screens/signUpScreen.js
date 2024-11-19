@@ -234,6 +234,7 @@ const SignUpScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Uncomment to display image after selection */}
         {/* Display selected image (if any) */}
         {/* {profileUrl && (
           <Image source={{uri: profileUrl}} style={styles.profileImage} />

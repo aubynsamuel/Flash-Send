@@ -105,7 +105,6 @@ const LoginScreen = () => {
         </View>
 
         {/* Password */}
-        {/* Password */}
         <View style={styles.lsInputField}>
           <MaterialIcons name="lock" color={styles.IconColor} size={25} />
           <View

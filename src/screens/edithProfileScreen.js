@@ -23,7 +23,7 @@ import { useTheme } from "../ThemeContext";
 import { StatusBar } from "expo-status-bar";
 
 const EditProfileScreen = () => {
-  const { user, updateProfile, ToastMessage } = useAuth(); // Assuming `updateProfile` is a function from `useAuth` to save user changes
+  const { user, updateProfile, ToastMessage } = useAuth();
   const [username, setUsername] = useState(user.username || "");
   const [profileUrl, setProfileUrl] = useState(user.profileUrl || null);
   const [isLoading, setIsLoading] = useState(false);
