@@ -6,6 +6,7 @@ import {
   GestureHandlerRootView,
   Swipeable,
 } from "react-native-gesture-handler";
+import { Clipboard } from "react-native";
 import {
   Menu,
   MenuOption,
@@ -14,7 +15,6 @@ import {
 } from "react-native-popup-menu";
 import { MaterialIcons } from "@expo/vector-icons";
 import getStyles from "./Component_Styles";
-import Clipboard from "@react-native-clipboard/clipboard";
 
 const MessageObject = memo(
   ({
