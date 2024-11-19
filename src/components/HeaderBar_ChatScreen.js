@@ -63,6 +63,9 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
     width: interpolate(gestureProgress.value, [0, 1], [45, MAX_IMAGE_WIDTH]),
     height: interpolate(gestureProgress.value, [0, 1], [45, MAX_HEADER_HEIGHT]),
     borderRadius: interpolate(gestureProgress.value, [0, 1], [30, 0]),
+  }));
+  
+  const animatedImageContainerStyle = useAnimatedStyle(() => ({
     transform: [
       {
         translateX: interpolate(gestureProgress.value, [0, 1], [0, 20]),
@@ -112,18 +115,22 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
             <MenuTrigger>
               <View>
                 {imageFailed || !profileUrl ? (
-                  <Animated.Image
-                    entering={FadeInLeft.duration(300)}
-                    style={[styles.hcAvatar, animatedImageStyle]}
-                    source={require("../../myAssets/Images/default-profile-picture-avatar-photo-600nw-1681253560.webp")}
-                  />
+                  <Animated.View style={[animatedImageContainerStyle]}>
+                    <Animated.Image
+                      entering={FadeInLeft.duration(300)}
+                      style={[styles.hcAvatar, animatedImageStyle]}
+                      source={require("../../myAssets/Images/default-profile-picture-avatar-photo-600nw-1681253560.webp")}
+                    />
+                  </Animated.View>
                 ) : (
-                  <Animated.Image
-                    entering={FadeInLeft.duration(300)}
-                    style={[styles.hcAvatar, animatedImageStyle]}
-                    source={{ uri: profileUrl }}
-                    onError={() => setImageFailed(true)}
-                  />
+                  <Animated.View style={[animatedImageContainerStyle]}>
+                    <Animated.Image
+                      entering={FadeInLeft.duration(300)}
+                      style={[styles.hcAvatar, animatedImageStyle]}
+                      source={{ uri: profileUrl }}
+                      onError={() => setImageFailed(true)}
+                    />
+                  </Animated.View>
                 )}
               </View>
             </MenuTrigger>
