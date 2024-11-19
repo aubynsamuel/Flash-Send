@@ -94,6 +94,17 @@ export const roomRef = collection(db, "rooms")
 
 4. Run the app:
 
+   For Expo
+   
+   First create a development build
+   ```bash
+   npx eas build --profile development --platform android
+   ```
+   Then
+   ```bash
+   npx expo start
+   ```
+
    For iOS:
 
    ```bash
