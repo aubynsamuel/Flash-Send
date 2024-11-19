@@ -16,13 +16,11 @@ import ThemeContextProvider from "./src/ThemeContext";
 import { LogBox } from "react-native";
 import { useTheme } from "./src/ThemeContext";
 import DarkMode from "./src/Themes/DarkMode";
-import { MessagesProvider } from "./src/MessagesLoadingContext";
 
 const App = () => {
   return (
     <RootSiblingParent>
       <AuthContextProvider>
-        <MessagesProvider>
           <ExpoPushNotifications>
             <ThemeContextProvider>
               <MenuProvider>
@@ -32,7 +30,6 @@ const App = () => {
               </MenuProvider>
             </ThemeContextProvider>
           </ExpoPushNotifications>
-        </MessagesProvider>
       </AuthContextProvider>
     </RootSiblingParent>
   );

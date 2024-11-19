@@ -13,7 +13,8 @@ export default getStyles = (theme) => {
     },
     crMessages: {
       paddingHorizontal: 10,
-      paddingTop: 65,
+      marginTop: 65,
+      paddingBottom: 65,
     },
     crInputContainer: {
       flexDirection: "row",
@@ -90,6 +91,22 @@ export default getStyles = (theme) => {
     },
     cdEditingPreviewText: {
       color: theme.primary,
+    },
+
+    sectionHeader: {
+      backgroundColor: theme.background,
+      opacity: 0.8,
+      borderRadius: 8,
+      alignSelf: 'center',
+      marginVertical:5
+    },
+    sectionHeaderText: {
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
+      marginHorizontal: 5,
+      marginVertical: 1,
+      color:theme.text.primary
     },
 
     // Edit Profile Screen

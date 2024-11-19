@@ -25,13 +25,13 @@ export const formatDate = (firestoreTimestamp) => {
   const year = date.getUTCFullYear();
 
   const formattedDayOfTheWeek = [
+    "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
     "Saturday",
-    "Sunday",
   ];
   // Format day, date, month, and year
   const formattedDay = day.toString().padStart(2, "0");
@@ -63,12 +63,13 @@ export const formatDate = (firestoreTimestamp) => {
     formattedDate = `Today`;
   } else {
     formattedDate = `${
-      formattedDayOfTheWeek[dayOfTheWeek - 1]
+      formattedDayOfTheWeek[dayOfTheWeek]
     } ${formattedDay} ${months[month]}, ${year}`;
   }
 
   return formattedDate;
 };
+
 
 export const formatTimeWithoutSeconds = (firestoreTimestamp) => {
   // Extract seconds from Firestore Timestamp
