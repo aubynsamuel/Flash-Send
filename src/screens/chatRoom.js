@@ -628,7 +628,7 @@ const ChatScreen = () => {
           <View style={styles.crReplyPreview}>
             <View style={styles.crReplyPreviewContent}>
               <Text style={styles.crReplyPreviewName}>
-                Replying to
+                Replying to{" "}
                 {replyTo.senderId === user?.userId
                   ? "yourself"
                   : replyTo.senderName}

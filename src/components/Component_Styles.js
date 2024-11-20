@@ -67,7 +67,7 @@ export default getStyles = (theme) => {
       overflow: "hidden",
     },
     hcHeaderTitle: {
-      fontSize: 22.5,
+      fontSize: 20,
       fontWeight: "500",
       marginHorizontal: 10,
       color: theme.text.primary,

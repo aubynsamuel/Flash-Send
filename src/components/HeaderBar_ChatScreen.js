@@ -94,7 +94,7 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
               name="arrow-back"
               style={styles.hcHeaderBarIcon}
               color={theme.text.primary}
-              size={25}
+              size={24}
             />
           </AnimatedTouchableOpacity>
         </Animated.View>
