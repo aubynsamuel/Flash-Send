@@ -37,7 +37,7 @@ const LoginScreen = () => {
 
     const response = await resetPassword(email.current);
     if (response.success) {
-      showToast("A password reset link has been sent to your email address");
+      showToast("Reset link has been sent to your email");
     } else {
       showToast(response.msg);
       console.log(response);

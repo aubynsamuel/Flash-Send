@@ -48,11 +48,11 @@ const UserProfileContent = ({ children }) => {
         const selectedImage = response.assets[0].uri;
         console.log("ImagePicker Selected: ", selectedImage);
         await changeBackgroundPic(selectedImage);
-        showToast("Chat Background Changed Successfully");
+        showToast("Background Picture Changed");
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      showToast("Failed to change chat background");
+      showToast("Failed to change background picture");
     }
   };
 
