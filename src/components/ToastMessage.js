@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, TouchableWithoutFeedback } from "react-native";
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+} from "react-native";
 
-const Toast = ({ message, duration = 3000, pressToDismiss = true, style }) => {
+const Toast = ({ message, duration, pressToDismiss = true, style }) => {
   const [visible, setVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 

@@ -31,7 +31,7 @@ export const AuthContextProvider = ({ children }) => {
 
   const showToast = (message) => {
     setToastMessage(message);
-    setTimeout(() => setToastMessage(""), 3000);
+    setTimeout(() => setToastMessage(""), 2800);
   };
 
   // Initialize auth state from storage
