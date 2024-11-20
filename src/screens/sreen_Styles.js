@@ -89,7 +89,13 @@ export default getStyles = (theme) => {
       top: 16,
       width: "90%",
     },
-    cdEditingPreviewText: {
+    crEditingPreviewText: {
+      fontSize: 12,
+      color: theme.primary,
+    },
+    crEditingPreviewName: {
+      fontSize: 12,
+      fontWeight: "bold",
       color: theme.primary,
     },
 

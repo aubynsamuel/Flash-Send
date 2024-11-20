@@ -134,14 +134,14 @@ const ChatScreen = () => {
 
     const cleanupListeners = initializeChat();
 
-    const keyboardListener = Keyboard.addListener(
-      "keyboardDidShow",
-      updateScrollToEnd
-    );
+    // const keyboardListener = Keyboard.addListener(
+    //   "keyboardDidShow",
+    //   updateScrollToEnd
+    // );
 
     return () => {
       if (cleanupListeners) cleanupListeners;
-      keyboardListener.remove();
+      // keyboardListener.remove();
     };
   }, []);
 
@@ -259,6 +259,7 @@ const ChatScreen = () => {
   };
 
   const scrollToMessage = (messageId) => {
+    setHighlightedMessageId(null)
     let sectionIndex = -1;
     let itemIndex = -1;
 
@@ -273,7 +274,8 @@ const ChatScreen = () => {
 
     if (sectionIndex !== -1 && itemIndex !== -1 && sectionListRef.current) {
       // console.log(`sectionIndex, itemIndex = ${sectionIndex}, ${itemIndex}`);
-      setHighlightedMessageId(messageId);
+      setHighlightedMessageId(messageId)
+      setTimeout(()=>setHighlightedMessageId(null), 2500);
       sectionListRef.current.scrollToLocation({
         sectionIndex: sectionIndex,
         itemIndex: itemIndex,
@@ -382,8 +384,7 @@ const ChatScreen = () => {
       return;
     }
 
-    setHighlightedMessageId(null);
-    cancelReply();
+    setReplyTo(null);
 
     const newMessageId = Date.now().toString();
     const timeCreated = getCurrentTime();
@@ -466,16 +467,17 @@ const ChatScreen = () => {
   );
 
   const handleEdit = (message) => {
-    inputRef.current.focus();
     setScrollToEnButton(false);
     cancelReply();
     setEditingMessage(message);
     setInputText(message.content);
+    inputRef.current.focus();
   };
 
   const cancelEditing = () => {
     setEditingMessage(null);
     setInputText("");
+    Keyboard.dismiss()
   };
 
   const saveEditedMessage = async () => {
@@ -538,7 +540,6 @@ const ChatScreen = () => {
   };
 
   const handleReply = (message) => {
-    inputRef.current.focus();
     setScrollToEnButton(false);
     cancelEditing();
     setReplyTo({
@@ -547,10 +548,12 @@ const ChatScreen = () => {
       senderId: message.senderId,
       senderName: message.senderName,
     });
+    inputRef.current.focus();
   };
 
   const cancelReply = () => {
     setReplyTo(null);
+    Keyboard.dismiss()
   };
 
   // Uncomment to help scroll to first unread message
@@ -625,7 +628,7 @@ const ChatScreen = () => {
           <View style={styles.crReplyPreview}>
             <View style={styles.crReplyPreviewContent}>
               <Text style={styles.crReplyPreviewName}>
-                Replying to{" "}
+                Replying to
                 {replyTo.senderId === user?.userId
                   ? "yourself"
                   : replyTo.senderName}
@@ -646,9 +649,14 @@ const ChatScreen = () => {
 
         {editingMessage && (
           <View style={styles.crEditingPreview}>
-            <Text style={styles.cdEditingPreviewText}>
-              Editing message: {editingMessage.content}
-            </Text>
+            <View>
+              <Text numberOfLines={1} style={styles.crEditingPreviewName}>
+                Editing message
+              </Text>
+              <Text numberOfLines={1} style={styles.crEditingPreviewText}>
+                {editingMessage.content}
+              </Text>
+            </View>
             <TouchableOpacity onPress={cancelEditing}>
               <MaterialIcons
                 name="close"
@@ -673,7 +681,11 @@ const ChatScreen = () => {
             numberOfLines={6}
             multiline={true}
           />
-          <TouchableOpacity onPress={handleSend} style={styles.crSendButton} activeOpacity={0.1}>
+          <TouchableOpacity
+            onPress={handleSend}
+            style={styles.crSendButton}
+            activeOpacity={0.1}
+          >
             <MaterialIcons
               name="send"
               color={selectedTheme.text.primary}
