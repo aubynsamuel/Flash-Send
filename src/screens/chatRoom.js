@@ -61,7 +61,7 @@ const ChatScreen = () => {
   const [renderEmptyComponent, setRenderEmptyComponent] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
   // Uncomment to set first unread message as initial scroll position
-  // const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
+  const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
   const roomId = useMemo(
     () => getRoomId(user.userId, userId),
     [userId, user.userId]
@@ -145,23 +145,23 @@ const ChatScreen = () => {
     };
   }, []);
 
-  // const findFirstUnreadMessageIndex = useCallback(
-  //   (messages) => {
-  //     return messages.findIndex(
-  //       (msg) => !msg.read && msg.senderId !== user?.userId
-  //     );
-  //   },
-  //   [user?.userId]
-  // );
+  const findFirstUnreadMessageIndex = useCallback(
+    (messages) => {
+      return messages.findIndex(
+        (msg) => !msg.read
+      );
+    },
+    [user?.userId]
+  );
 
-  // useEffect(() => {
-  //   if (messages.length > 0) {
-  //     const index = findFirstUnreadMessageIndex(messages);
-  //     if (index !== -1) {
-  //       setFirstUnreadIndex(index);
-  //     }
-  //   }
-  // }, [messages]);
+  useEffect(() => {
+    if (messages.length > 0) {
+      const index = findFirstUnreadMessageIndex(messages);
+      if (index !== -1) {
+        setFirstUnreadIndex(index);
+      }
+    }
+  }, [messages]);
 
   const messagesSections = useMemo(() => {
     if (!messages.length) return [];
@@ -259,7 +259,7 @@ const ChatScreen = () => {
   };
 
   const scrollToMessage = (messageId) => {
-    setHighlightedMessageId(null)
+    setHighlightedMessageId(null);
     let sectionIndex = -1;
     let itemIndex = -1;
 
@@ -274,14 +274,14 @@ const ChatScreen = () => {
 
     if (sectionIndex !== -1 && itemIndex !== -1 && sectionListRef.current) {
       // console.log(`sectionIndex, itemIndex = ${sectionIndex}, ${itemIndex}`);
-      setHighlightedMessageId(messageId)
-      setTimeout(()=>setHighlightedMessageId(null), 2500);
+      setHighlightedMessageId(messageId);
       sectionListRef.current.scrollToLocation({
         sectionIndex: sectionIndex,
         itemIndex: itemIndex,
         viewPosition: 0.5,
         animated: true,
       });
+      setTimeout(() => setHighlightedMessageId(null), 2500);
     }
   };
 
@@ -477,7 +477,7 @@ const ChatScreen = () => {
   const cancelEditing = () => {
     setEditingMessage(null);
     setInputText("");
-    Keyboard.dismiss()
+    Keyboard.dismiss();
   };
 
   const saveEditedMessage = async () => {
@@ -553,15 +553,15 @@ const ChatScreen = () => {
 
   const cancelReply = () => {
     setReplyTo(null);
-    Keyboard.dismiss()
+    Keyboard.dismiss();
   };
 
   // Uncomment to help scroll to first unread message
-  // const getItemLayout = (data, index) => ({
-  //   length: 100,
-  //   offset: 100 * index,
-  //   index,
-  // });
+  const getItemLayout = (data, index) => ({
+    length: 100,
+    offset: 100 * index,
+    index,
+  });
 
   return (
     <View
@@ -610,10 +610,10 @@ const ChatScreen = () => {
           onScrollBeginDrag={() => setScrollToEnButton(true)}
           onEndReached={() => setScrollToEnButton(false)}
           //Uncomment to aid initial scroll to index
-          // getItemLayout={getItemLayout}
-          // initialScrollIndex={
-          //   firstUnreadIndex !== null ? firstUnreadIndex : messages.length - 1
-          // }
+          getItemLayout={getItemLayout}
+          initialScrollIndex={
+            firstUnreadIndex !== null ? firstUnreadIndex : messages.length - 1
+          }
           onScrollToIndexFailed={updateScrollToEnd}
           ListEmptyComponent={renderEmptyComponent && <EmptyChatRoomList />}
         />

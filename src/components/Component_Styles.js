@@ -148,7 +148,7 @@ export default getStyles = (theme) => {
       borderRadius: 7,
       marginVertical: 5,
       alignSelf: "flex-start",
-      maxWidth: "80%",
+      maxWidth: "70%",
       paddingHorizontal: 5,
       paddingVertical: 3,
       elevation: 2
@@ -196,8 +196,8 @@ export default getStyles = (theme) => {
     },
     referenceMessageContainer: {
       width: "100%",
-      backgroundColor: theme.surface,
-      opacity: 0.8,
+      backgroundColor: theme.background,
+      opacity: 0.7,
       borderRadius: 10,
     },
     menuContainer: {

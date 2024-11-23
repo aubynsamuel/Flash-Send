@@ -37,49 +37,68 @@ export default function ExpoPushNotifications({ children }) {
   useEffect(() => {
     registerForPushNotificationsAsync();
 
-    // Set up notification categories
-    Notifications.setNotificationCategoryAsync("actions", [
-      {
-        identifier: "REPLY_ACTION",
-        buttonTitle: "Reply",
-        options: {
-          opensAppToForeground: true,
-          isDestructive: true,
-          isAuthenticationRequired: false,
-        },
-        textInput: {
-          submitButtonTitle: "Send",
-          placeholder: "Type your reply...",
-        },
-      },
-      {
-        identifier: "MARK_AS_READ",
-        buttonTitle: "Mark as Read",
-        options: {
-          opensAppToForeground: false,
-          isDestructive: false,
-          isAuthenticationRequired: false,
-        },
-      },
-    ]);
+    const notificationCategories = async () => {
+      try {
+        // Set up notification categories
+
+        await Notifications.setNotificationCategoryAsync(
+          "MESSAGE_CATEGORY",
+          [
+            {
+              identifier: "REPLY_ACTION",
+              buttonTitle: "Reply",
+              options: {
+                opensAppToForeground: true,
+                isDestructive: true,
+                isAuthenticationRequired: false,
+              },
+              textInput: {
+                submitButtonTitle: "Send",
+                placeholder: "Type your reply...",
+              },
+            },
+            {
+              identifier: "MARK_AS_READ",
+              buttonTitle: "Mark as Read",
+              options: {
+                opensAppToForeground: false,
+                isDestructive: false,
+                isAuthenticationRequired: false,
+              },
+            },
+          ],
+          null
+        );
+        console.log("Notification category set successfully!");
+      } catch (error) {
+        console.error("Failed to set notification category:", error);
+      }
+    };
+    notificationCategories();
 
     const notificationListener = Notifications.addNotificationReceivedListener(
       async (notification) => {
-        // if (notificationDisplayed) return; // Skip if already displayed
-        const { replyTo, roomId, title, body } = notification.request.content.data || {};
-        // notificationDisplayed = true; 
-
-        // await Notifications.dismissNotificationAsync(notification.request.identifier);
+        const content = notification.request.content;
+        if (!content.categoryIdentifier) {
+          content.categoryIdentifier = "MESSAGE_CATEGORY"; // Set the category manually
+        }
+        console.log("Remote Notification Received:", notification);
+        const { replyTo, roomId } = notification.request.content.data || {};
+        const { title, body } = notification.request.content || {};
 
         if (!roomId) {
           console.error("No roomId received in notification data");
           return;
         }
-        
+
+        // schedulePushNotification(title, body, roomId)
+
         setReplyTo(replyTo);
         setRoomId(roomId);
-        console.log("Reply To: " + replyTo);
-        console.log("RoomId: " + roomId);
+        console.log(`Title: ${title}`);
+        console.log(`Body: ${body}`);
+        console.log(`Reply To: ${replyTo}`);
+        console.log(`RoomId: ${roomId}`);
       }
     );
 
@@ -87,27 +106,25 @@ export default function ExpoPushNotifications({ children }) {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener(
         async (response) => {
+          // console.log("Remote Notification Response:", response);
           const { actionIdentifier, userText } = response.actionIdentifier
             ? response
             : { actionIdentifier: null, userText: null };
-          
-          const notificationData = response.notification?.request?.content?.data;
-          const currentRoomId = notificationData?.roomId || roomId;
-          
-          if (!currentRoomId) {
+
+          if (!roomId) {
             console.error("No roomId available for action");
             return;
           }
 
           console.log("Action:", actionIdentifier, "Text:", userText);
-          console.log("Current RoomId:", currentRoomId);
+          console.log("Current RoomId:", roomId);
 
           if (actionIdentifier === "REPLY_ACTION") {
-            await handleReplyAction(userText, user, currentRoomId, replyTo);
+            await handleReplyAction(userText, user, roomId, replyTo);
           } else if (actionIdentifier === "MARK_AS_READ") {
-            await handleMarkAsReadAction(user, currentRoomId);
+            await handleMarkAsReadAction(user, roomId);
           }
-          
+
           if (response.notification) {
             await Notifications.dismissNotificationAsync(
               response.notification.request.identifier
@@ -115,13 +132,13 @@ export default function ExpoPushNotifications({ children }) {
           }
         }
       );
-      
+
     return () => {
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current);
       Notifications.removeNotificationSubscription(notificationListener);
     };
-  }, [roomId]); // Added roomId to dependencies
+  }, [roomId]);
 
   return <>{children}</>;
 }
@@ -179,12 +196,11 @@ export async function schedulePushNotification(title, body, roomId) {
       title: title,
       body: body,
       data: { replyTo: deviceToken || null, roomId: roomId || null },
-      categoryIdentifier: "actions",
+      categoryIdentifier: "MESSAGE_CATEGORY",
     },
-    trigger: null ,
+    trigger: null,
   });
 }
-
 
 export const sendNotification = async (expoPushToken, title, body, roomId) => {
   const message = {
@@ -192,8 +208,8 @@ export const sendNotification = async (expoPushToken, title, body, roomId) => {
     sound: "default",
     title: title,
     body: body,
+    categoryIdentifier: "MESSAGE_CATEGORY",
     data: { replyTo: deviceToken || null, roomId: roomId || null },
-    categoryIdentifier: "actions",
     channelId: "default",
     priority: "high",
   };
@@ -230,7 +246,7 @@ async function handleReplyAction(replyText, user, roomId, deviceToken) {
       delivered: true,
       read: false,
     };
-    await setDoc(newMessageRef, {...newMessage});
+    await setDoc(newMessageRef, { ...newMessage });
 
     await setDoc(
       roomRef,
@@ -252,7 +268,6 @@ async function handleReplyAction(replyText, user, roomId, deviceToken) {
     console.error(error);
   }
   console.log("Replied to message");
-  // handleMarkAsReadAction(user, roomId)
 }
 
 async function handleMarkAsReadAction(user, roomId) {
@@ -261,14 +276,14 @@ async function handleMarkAsReadAction(user, roomId) {
     console.error("Invalid user data:", user);
     return;
   }
-  
-  if (!roomId || typeof roomId !== 'string') {
+
+  if (!roomId || typeof roomId !== "string") {
     console.error("Invalid roomId:", roomId);
     return;
   }
 
   console.log("Marking as read for user:", user.userId, "in room:", roomId);
-  
+
   try {
     const messagesRef = collection(db, "rooms", roomId, "messages");
     const q = query(
@@ -278,7 +293,7 @@ async function handleMarkAsReadAction(user, roomId) {
     );
 
     const snapshot = await getDocs(q);
-    
+
     if (snapshot.empty) {
       console.log("No unread messages found");
       return;
@@ -288,13 +303,11 @@ async function handleMarkAsReadAction(user, roomId) {
     snapshot.forEach((doc) => {
       batch.update(doc.ref, { read: true });
     });
-    
+
     await batch.commit();
     console.log(`Marked ${snapshot.size} messages as read`);
-    
   } catch (error) {
     console.error("Failed to update message read status:", error);
-    throw error; // Re-throw the error for higher-level error handling
+    throw error;
   }
-  // dismiss the notification
 }

@@ -22,13 +22,14 @@ const STORAGE_KEYS = {
   AUTH_STATE: "auth_state",
 };
 
+export let userDetails
 // Create Authentication Context Provider
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState("");
-
+  userDetails = user
   const showToast = (message) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(""), 2800);
