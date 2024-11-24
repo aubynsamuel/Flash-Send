@@ -1,11 +1,10 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../AuthContext";
-import { formatTimeWithoutSeconds } from "../../commons";
+import { formatTimeWithoutSeconds , getRoomId} from "../Functions/commons";
 import { memo, useEffect, useState } from "react";
 import { db } from "../../env/firebaseConfig";
 import { collection, query, onSnapshot, doc, where } from "firebase/firestore";
-import { getRoomId } from "../../commons";
 import getStyles from "./Component_Styles";
 
 const ChatObject = memo(({ room, theme }) => {

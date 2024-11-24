@@ -1,7 +1,7 @@
 import { View, Image, StyleSheet } from "react-native";
-import React from "react";
+import React, { memo } from "react";
 
-const ChatRoomBackground = ({ source }) => {
+const ChatRoomBackground = memo(({ source }) => {
   const defaultSource = "../../myAssets/Images/default-chat-background.webp";
   return (
     <View
@@ -31,6 +31,6 @@ const ChatRoomBackground = ({ source }) => {
       />
     </View>
   );
-};
+});
 
 export default ChatRoomBackground;

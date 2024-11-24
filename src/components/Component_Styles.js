@@ -197,7 +197,7 @@ export default getStyles = (theme) => {
     referenceMessageContainer: {
       width: "100%",
       backgroundColor: theme.background,
-      opacity: 0.7,
+      opacity: 0.9,
       borderRadius: 10,
     },
     menuContainer: {

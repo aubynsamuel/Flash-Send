@@ -140,15 +140,20 @@ export const roomRef = collection(db, "rooms")
 
 /chat-app
 │
-├── /assets/                    # Image and font assets
+├── /myAssets/                    # Images and lottie animations
 ├── /components/                # Reusable UI components (e.g., Header, ChatBubble)
 ├── /navigation/                # Navigation setup with React Navigation
 ├── /screens/                   # App screens (e.g., Chat, Home, Login, Sign Up)
+├── /Functions/                 # Utility functions
+├── /env/                       # Firebase configuration, google-services and service account files
+├──/Theme/                      # Themes for the app
+├── /Services/                  # ExpoPushNotifications
 ├── AuthContext.js              # User authentication context
-├── firebaseConfig.js           # Firebase configuration
-├── commons.js                  # Utility functions
+├── NotificationTokenManager.js # Ensures that a valid token is available for notifications
+├── ThemeContext.js             # Handles theme switching 
 ├── App.js                      # Main app entry point
 └── package.json                # Project dependencies and scripts
+
 ```
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo } from "react";
 import {
   Animated,
   StyleSheet,
@@ -6,7 +6,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 
-const Toast = ({ message, duration, pressToDismiss = true, style }) => {
+const Toast = memo(({ message, duration, pressToDismiss = true, style }) => {
   const [visible, setVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,7 +58,7 @@ const Toast = ({ message, duration, pressToDismiss = true, style }) => {
       </Animated.View>
     </TouchableWithoutFeedback>
   );
-};
+});
 
 const styles = StyleSheet.create({
   toastContainer: {

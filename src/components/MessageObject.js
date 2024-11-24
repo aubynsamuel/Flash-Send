@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import React, { memo, useRef } from "react";
-import { formatTimeWithoutSeconds } from "../../commons";
+import { formatTimeWithoutSeconds } from "../Functions/commons";
 import { useAuth } from "../AuthContext";
 import { Clipboard } from "react-native";
 import {

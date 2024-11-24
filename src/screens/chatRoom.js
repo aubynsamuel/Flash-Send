@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useLayoutEffect,
 } from "react";
 import {
   View,
@@ -32,8 +33,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
 import TopHeaderBar from "../components/HeaderBar_ChatScreen";
-import { getRoomId } from "../../commons";
-import { getCurrentTime, formatDate } from "../../commons";
+import { getCurrentTime, formatDate, getRoomId } from "../Functions/commons";
 import MessageObject from "../components/MessageObject";
 import { MaterialIcons } from "@expo/vector-icons";
 import { sendNotification } from "../services/ExpoPushNotifications";
@@ -58,42 +58,25 @@ const ChatScreen = () => {
   const inputRef = useRef(null);
   const [otherUserToken, setOtherUserToken] = useState("");
   const [scrollToEnButton, setScrollToEnButton] = useState(true);
-  const [renderEmptyComponent, setRenderEmptyComponent] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
-  // Uncomment to set first unread message as initial scroll position
   const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
+  const [isFirstRender, setIsFirstRender] = useState(true);
   const roomId = useMemo(
     () => getRoomId(user.userId, userId),
     [userId, user.userId]
   );
-  // const [cacheMessagesLength, setCachedMessagesLength] = useState();
 
   // Initialize Chat Room
-  useEffect(() => {
+  useLayoutEffect(() => {
     const fetchCachedMessages = async () => {
       try {
         const cachedMessages = storage.getString(`messages_${roomId}`);
         const parseCacheMessages = JSON.parse(cachedMessages);
-        // setCachedMessagesLength(parseCacheMessages.length);
         if (parseCacheMessages) {
           setMessages(parseCacheMessages);
-          // console.log(
-          //   `${cacheMessagesLength} Messages retrieved from storage successfully`
-          // );
         }
       } catch (error) {
         console.error("Failed to fetch cached messages", error);
-      }
-    };
-
-    const cacheMessages = async (newMessages) => {
-      try {
-        if (newMessages.length > 0) {
-          storage.set(`messages_${roomId}`, JSON.stringify(newMessages));
-          console.log("New messages cached successfully");
-        }
-      } catch (error) {
-        console.error("Failed to cache messages", error);
       }
     };
 
@@ -110,10 +93,6 @@ const ChatScreen = () => {
           }));
           if (allMessages !== null && allMessages.length > 0) {
             setMessages(allMessages);
-            cacheMessages(allMessages);
-            // console.log(
-            //   `${allMessages.length} messages fetched from firebase and loaded successfully`
-            // );
           }
           updateScrollToEnd();
         });
@@ -134,22 +113,31 @@ const ChatScreen = () => {
 
     const cleanupListeners = initializeChat();
 
-    // const keyboardListener = Keyboard.addListener(
-    //   "keyboardDidShow",
-    //   updateScrollToEnd
-    // );
-
     return () => {
       if (cleanupListeners) cleanupListeners;
-      // keyboardListener.remove();
     };
-  }, []);
+  }, [roomId]);
+
+  useEffect(() => {
+    const cacheMessages = async () => {
+      try {
+        if (messages.length > 0) {
+          storage.set(`messages_${roomId}`, JSON.stringify(messages));
+          console.log("Messages cached successfully on unmount");
+        }
+      } catch (error) {
+        console.error("Failed to cache messages on unmount", error);
+      }
+    };
+
+    return () => {
+      cacheMessages();
+    };
+  }, [messages, roomId]);
 
   const findFirstUnreadMessageIndex = useCallback(
     (messages) => {
-      return messages.findIndex(
-        (msg) => !msg.read
-      );
+      return messages.findIndex((msg) => !msg.read);
     },
     [user?.userId]
   );
@@ -191,9 +179,6 @@ const ChatScreen = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (messages.length <= 0) {
-      setTimeout(() => setRenderEmptyComponent(true), 1500);
-    }
     createRoomIfItDoesNotExist();
     fetchOtherUserToken();
   }, []);
@@ -255,10 +240,11 @@ const ChatScreen = () => {
           animated: true,
         });
       }
-    }, 200);
+    }, 300);
   };
 
   const scrollToMessage = (messageId) => {
+    setIsFirstRender(false)
     setHighlightedMessageId(null);
     let sectionIndex = -1;
     let itemIndex = -1;
@@ -283,6 +269,7 @@ const ChatScreen = () => {
       });
       setTimeout(() => setHighlightedMessageId(null), 2500);
     }
+    setFirstRender(true);
   };
 
   const createRoomIfItDoesNotExist = useCallback(async () => {
@@ -556,12 +543,13 @@ const ChatScreen = () => {
     Keyboard.dismiss();
   };
 
-  // Uncomment to help scroll to first unread message
-  const getItemLayout = (data, index) => ({
-    length: 100,
-    offset: 100 * index,
-    index,
-  });
+  const getItemLayout = isFirstRender
+    ? (data, index) => ({
+        length: 100,
+        offset: 100 * index,
+        index,
+      })
+    : undefined;
 
   return (
     <View
@@ -600,13 +588,13 @@ const ChatScreen = () => {
           renderSectionHeader={renderSectionHeader}
           contentContainerStyle={styles.crMessages}
           showsVerticalScrollIndicator={false}
-          maxToRenderPerBatch={30}
-          windowSize={30}
-          updateCellsBatchingPeriod={50}
-          initialNumToRender={20}
+          maxToRenderPerBatch={15}
+          updateCellsBatchingPeriod={40}
+          windowSize={21}
+          initialNumToRender={15}
+          onEndReachedThreshold={0.5}
           stickySectionHeadersEnabled={true}
           stickyHeaderHiddenOnScroll={true}
-          onContentSizeChange={updateScrollToEnd}
           onScrollBeginDrag={() => setScrollToEnButton(true)}
           onEndReached={() => setScrollToEnButton(false)}
           //Uncomment to aid initial scroll to index
@@ -614,8 +602,17 @@ const ChatScreen = () => {
           initialScrollIndex={
             firstUnreadIndex !== null ? firstUnreadIndex : messages.length - 1
           }
-          onScrollToIndexFailed={updateScrollToEnd}
-          ListEmptyComponent={renderEmptyComponent && <EmptyChatRoomList />}
+          onScrollToIndexFailed={(info) => {
+            const wait = new Promise((resolve) => setTimeout(resolve, 500));
+            wait.then(() => {
+              sectionListRef.current?.scrollToLocation({
+                sectionIndex: info.index, 
+                itemIndex: 0,
+                animated: true,
+              });
+            });
+          }}
+          ListEmptyComponent={<EmptyChatRoomList />}
         />
         {scrollToEnButton && (
           <View style={styles.crScrollToEndButton}>

@@ -3,7 +3,7 @@ import { FlatList, View, RefreshControl, Text } from "react-native";
 import ChatObject from "./ChatObject";
 import getStyles from "./Component_Styles";
 
-const ChatList = ({ rooms, isLoading, onRefresh, theme }) => {
+const ChatList = memo(({ rooms, isLoading, onRefresh, theme }) => {
   const styles = getStyles(theme);
   const renderEmptyComponent = () => (
     <View style={styles.clEmptyContainer}>
@@ -35,6 +35,6 @@ const ChatList = ({ rooms, isLoading, onRefresh, theme }) => {
       ]}
     />
   );
-};
+});
 
 export default ChatList;
