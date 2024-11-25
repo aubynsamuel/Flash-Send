@@ -15,7 +15,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { userDetails as user } from "../AuthContext";
-import { getCurrentTime } from "../Functions/commons";
+import { getCurrentTime } from "../Functions/Commons";
 
 
 Notifications.setNotificationHandler({

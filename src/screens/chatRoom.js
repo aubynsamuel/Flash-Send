@@ -1,20 +1,13 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  useCallback,
-  useLayoutEffect,
-} from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { View, Text, Alert, TextInput, TouchableOpacity } from "react-native";
 import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Keyboard,
-  Text,
-  Alert,
-  SectionList,
-} from "react-native";
+  GiftedChat,
+  InputToolbar,
+  Bubble,
+  Send,
+  MessageText,
+  Composer,
+} from "react-native-gifted-chat";
 import { useRoute } from "@react-navigation/native";
 import { db } from "../../env/firebaseConfig";
 import {
@@ -32,16 +25,17 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useAuth } from "../AuthContext";
-import TopHeaderBar from "../components/HeaderBar_ChatScreen";
-import { getCurrentTime, formatDate, getRoomId } from "../Functions/commons";
-import MessageObject from "../components/MessageObject";
-import { MaterialIcons } from "@expo/vector-icons";
+import { getCurrentTime, getRoomId } from "../Functions/Commons";
 import { sendNotification } from "../services/ExpoPushNotifications";
-import getStyles from "./sreen_Styles";
 import { useTheme } from "../ThemeContext";
-import { StatusBar } from "expo-status-bar";
 import ChatRoomBackground from "../components/ChatRoomBackground";
-import storage from "../Functions/Storage";
+import TopHeaderBar from "../components/HeaderBar_ChatScreen";
+import { StatusBar } from "expo-status-bar";
+import { fetchCachedMessages, cacheMessages } from "../Functions/CacheMessages";
+import createRoomIfItDoesNotExist from "../Functions/CreateRoomIfItDoesNotExist";
+import { MaterialIcons } from "@expo/vector-icons";
+import getStyles from "./sreen_Styles";
+import * as Clipboard from "expo-clipboard";
 import EmptyChatRoomList from "../components/EmptyChatRoomList";
 
 const ChatScreen = () => {
@@ -49,451 +43,115 @@ const ChatScreen = () => {
   const { userId, username, profileUrl } = route.params;
   const { user } = useAuth();
   const { selectedTheme, chatBackgroundPic } = useTheme();
-  const styles = getStyles(selectedTheme);
   const [messages, setMessages] = useState([]);
-  const sectionListRef = useRef(null);
-  const [inputText, setInputText] = useState("");
-  const [replyTo, setReplyTo] = useState(null);
-  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
-  const inputRef = useRef(null);
   const [otherUserToken, setOtherUserToken] = useState("");
-  const [scrollToEnButton, setScrollToEnButton] = useState(true);
-  const [editingMessage, setEditingMessage] = useState(null);
-  const [firstUnreadIndex, setFirstUnreadIndex] = useState(null);
-  const [isFirstRender, setIsFirstRender] = useState(true);
-  const roomId = useMemo(
-    () => getRoomId(user.userId, userId),
-    [userId, user.userId]
-  );
+  const roomId = getRoomId(user.userId, userId);
+  const styles = getStyles(selectedTheme);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editMessage, setEditMessage] = useState(null);
+  const [editText, setEditText] = useState("");
 
-  // Initialize Chat Room
-  useLayoutEffect(() => {
-    const fetchCachedMessages = async () => {
-      try {
-        const cachedMessages = storage.getString(`messages_${roomId}`);
-        const parseCacheMessages = JSON.parse(cachedMessages);
-        if (parseCacheMessages) {
-          setMessages(parseCacheMessages);
-        }
-      } catch (error) {
-        console.error("Failed to fetch cached messages", error);
-      }
-    };
-
-    const subscribeToMessages = () => {
-      try {
-        const docRef = doc(db, "rooms", roomId);
-        const messagesRef = collection(docRef, "messages");
-        const q = query(messagesRef, orderBy("createdAt", "asc"));
-
-        return onSnapshot(q, (snapshot) => {
-          const allMessages = snapshot.docs.map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }));
-          if (allMessages !== null && allMessages.length > 0) {
-            setMessages(allMessages);
-          }
-          updateScrollToEnd();
-        });
-      } catch (error) {
-        console.error("failed to subscribe to firebase " + error);
-      }
-    };
+  useEffect(() => {
+    const roomRef = doc(db, "rooms", roomId);
+    const messagesRef = collection(roomRef, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "desc"));
 
     const initializeChat = async () => {
-      await fetchCachedMessages();
-      await createRoomIfItDoesNotExist();
-      const unsubscribe = subscribeToMessages();
+      const cachedMessages = await fetchCachedMessages(roomId);
+      if (cachedMessages && cachedMessages.length > 0) {
+        setMessages(cachedMessages);
+      }
 
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
+      await createRoomIfItDoesNotExist(roomId, user, userId);
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedMessages = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            _id: doc.id,
+            text: data.content,
+            createdAt: data.createdAt.toDate(),
+            user: {
+              _id: data.senderId,
+              name: data.senderName,
+            },
+            replyTo: data.replyTo,
+            read: data.read || false,
+            delivered: data.delivered || false,
+          };
+        });
+        setMessages(fetchedMessages);
+        cacheMessages(roomId, fetchedMessages);
+      });
+
+      return unsubscribe;
     };
 
-    const cleanupListeners = initializeChat();
+    const unsubscribe = initializeChat();
 
     return () => {
-      if (cleanupListeners) cleanupListeners;
+      if (unsubscribe) unsubscribe;
     };
-  }, [roomId]);
+  }, [roomId, user, userId]);
 
   useEffect(() => {
-    const cacheMessages = async () => {
+    const fetchOtherUserToken = async () => {
+      const userRef = doc(db, "users", userId);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        setOtherUserToken(userDoc.data().deviceToken);
+      }
+    };
+    fetchOtherUserToken();
+  }, [userId]);
+
+  const handleSend = useCallback(
+    async (newMessages = []) => {
+      const newMessage = newMessages[0];
+      setMessages((prevMessages) =>
+        GiftedChat.append(prevMessages, newMessages)
+      );
+
+      const roomRef = doc(db, "rooms", roomId);
+      const messagesRef = collection(roomRef, "messages");
+
       try {
-        if (messages.length > 0) {
-          storage.set(`messages_${roomId}`, JSON.stringify(messages));
-          console.log("Messages cached successfully on unmount");
+        const messageData = {
+          content: newMessage.text,
+          senderId: user.userId,
+          senderName: user.username,
+          createdAt: getCurrentTime(),
+          replyTo: newMessage.replyTo || null,
+          read: false,
+          delivered: true, 
+        };
+
+        await setDoc(doc(messagesRef), messageData);
+
+        await setDoc(
+          roomRef,
+          {
+            lastMessage: newMessage.text,
+            lastMessageTimestamp: getCurrentTime(),
+            lastMessageSenderId: user.userId,
+          },
+          { merge: true }
+        );
+
+        if (otherUserToken) {
+          sendNotification(
+            otherUserToken,
+            `New message from ${user.username}`,
+            newMessage.text,
+            roomId
+          );
         }
       } catch (error) {
-        console.error("Failed to cache messages on unmount", error);
+        console.error("Failed to send message:", error);
       }
-    };
-
-    return () => {
-      cacheMessages();
-    };
-  }, [messages, roomId]);
-
-  const findFirstUnreadMessageIndex = useCallback(
-    (messages) => {
-      return messages.findIndex((msg) => !msg.read);
     },
-    [user?.userId]
+    [roomId, user, otherUserToken]
   );
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      const index = findFirstUnreadMessageIndex(messages);
-      if (index !== -1) {
-        setFirstUnreadIndex(index);
-      }
-    }
-  }, [messages]);
-
-  const messagesSections = useMemo(() => {
-    if (!messages.length) return [];
-
-    // Group messages by date
-    const groupedMessages = messages.reduce((acc, message) => {
-      const date = formatDate(message.createdAt);
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(message);
-      return acc;
-    }, {});
-
-    // Convert to section formate
-    return Object.entries(groupedMessages)
-      .map(([date, data]) => ({
-        title: date,
-        data: data,
-      }))
-      .sort((a, b) => {
-        // Sort sections by date (newest messages at the bottom)
-        const dateA = a.data[0].createdAt.seconds;
-        const dateB = b.data[0].createdAt.seconds;
-        return dateA - dateB;
-      });
-  }, [messages]);
-
-  useEffect(() => {
-    createRoomIfItDoesNotExist();
-    fetchOtherUserToken();
-  }, []);
-
-  const renderSectionHeader = useCallback(
-    ({ section: { title } }) => (
-      <View style={styles.sectionHeader}>
-        <Text
-          style={[
-            styles.sectionHeaderText,
-            { color: selectedTheme.text.primary },
-          ]}
-        >
-          {title}
-        </Text>
-      </View>
-    ),
-    [selectedTheme]
-  );
-
-  const updateMessagesReadStatus = async () => {
-    try {
-      const roomId = getRoomId(user.userId, userId);
-      const messagesRef = collection(db, "rooms", roomId, "messages");
-      const q = query(
-        messagesRef,
-        where("senderId", "!=", user?.userId),
-        where("read", "==", false)
-      );
-
-      const snapshot = await getDocs(q);
-
-      // Use a batched write for efficiency
-      if (snapshot.size > 0) {
-        // Only create a batch if there are documents to update
-        const batch = writeBatch(db);
-        snapshot.forEach((doc) => {
-          batch.update(doc.ref, { read: true });
-        });
-        await batch.commit();
-      }
-    } catch (error) {
-      console.error("Failed to update message read status", error);
-    }
-  };
-
-  useEffect(() => {
-    updateMessagesReadStatus();
-  }, [messages]);
-
-  const updateScrollToEnd = () => {
-    setTimeout(() => {
-      if (sectionListRef.current && messagesSections.length > 0) {
-        const lastSection = messagesSections[messagesSections.length - 1];
-        sectionListRef.current.scrollToLocation({
-          sectionIndex: messagesSections.length - 1,
-          itemIndex: lastSection.data.length - 1,
-          viewPosition: 0.5,
-          animated: true,
-        });
-      }
-    }, 300);
-  };
-
-  const scrollToMessage = (messageId) => {
-    setIsFirstRender(false)
-    setHighlightedMessageId(null);
-    let sectionIndex = -1;
-    let itemIndex = -1;
-
-    // Find the section and item indices for the message
-    messagesSections.forEach((section, secIndex) => {
-      const msgIndex = section.data.findIndex((msg) => msg.id === messageId);
-      if (msgIndex !== -1) {
-        sectionIndex = secIndex;
-        itemIndex = msgIndex;
-      }
-    });
-
-    if (sectionIndex !== -1 && itemIndex !== -1 && sectionListRef.current) {
-      // console.log(`sectionIndex, itemIndex = ${sectionIndex}, ${itemIndex}`);
-      setHighlightedMessageId(messageId);
-      sectionListRef.current.scrollToLocation({
-        sectionIndex: sectionIndex,
-        itemIndex: itemIndex,
-        viewPosition: 0.5,
-        animated: true,
-      });
-      setTimeout(() => setHighlightedMessageId(null), 2500);
-    }
-    setFirstRender(true);
-  };
-
-  const createRoomIfItDoesNotExist = useCallback(async () => {
-    const roomRef = doc(db, "rooms", roomId);
-
-    // Check if the room already exists
-    const roomSnapshot = await getDoc(roomRef);
-
-    if (!roomSnapshot.exists()) {
-      // Room does not exist, create it with default values
-      await setDoc(
-        roomRef,
-        {
-          roomId,
-          participants: [user.userId, userId],
-          createdAt: getCurrentTime(),
-          lastMessage: "",
-          lastMessageTimestamp: getCurrentTime(),
-          lastMessageSenderId: "",
-        },
-        { merge: true }
-      );
-    } else {
-      console.log("Room already exists");
-    }
-  }, [roomId]);
-
-  const fetchOtherUserToken = async () => {
-    try {
-      const roomDocRef = doc(db, "users", userId);
-      const roomDocSnapshot = await getDoc(roomDocRef);
-
-      if (roomDocSnapshot.exists()) {
-        const roomData = roomDocSnapshot.data();
-        const otherUserToken = roomData.deviceToken;
-        setOtherUserToken(otherUserToken);
-        console.log("Other User Token:" + otherUserToken);
-      } else {
-        console.error("Other User's token does not exist!");
-      }
-    } catch (error) {
-      console.error("Error fetching other user token:", error);
-    }
-  };
-
-  const retrySendMessage = async (message) => {
-    try {
-      const roomRef = doc(db, "rooms", roomId);
-      const messagesRef = collection(roomRef, "messages");
-      const messageRef = doc(messagesRef); // New message document reference
-      const timeCreated = getCurrentTime();
-      await setDoc(messageRef, {
-        ...message,
-        createdAt: timeCreated,
-        delivered: true,
-      });
-
-      await setDoc(
-        roomRef,
-        {
-          lastMessage: message.content,
-          lastMessageTimestamp: timeCreated,
-          lastMessageSenderId: user?.userId,
-        },
-        { merge: true }
-      );
-
-      sendNotification(
-        otherUserToken,
-        `New message from ${user?.username} `,
-        message.content,
-        roomId
-      );
-
-      // Update the message state to reflect successful delivery
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, delivered: true } : msg
-        )
-      );
-    } catch (error) {
-      console.log(error);
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, delivered: true } : msg
-        )
-      );
-      console.error("Failed to send message", error);
-    }
-  };
-
-  const handleSend = async () => {
-    const message = inputText.trim();
-    setInputText("");
-    if (!message) return;
-
-    if (editingMessage) {
-      saveEditedMessage(message);
-      return;
-    }
-
-    setReplyTo(null);
-
-    const newMessageId = Date.now().toString();
-    const timeCreated = getCurrentTime();
-    const newMessage = {
-      id: newMessageId,
-      type: "text",
-      content: message,
-      senderId: user?.userId,
-      senderName: user?.username,
-      read: false,
-      createdAt: timeCreated,
-      delivered: false,
-      replyTo,
-    };
-
-    // Optimistically add message to local state
-    setMessages((prev) => [...prev, newMessage]);
-
-    try {
-      const roomRef = doc(db, "rooms", roomId);
-      const messagesRef = collection(roomRef, "messages");
-      const messageRef = doc(messagesRef);
-
-      await setDoc(messageRef, {
-        ...newMessage,
-        delivered: true,
-      });
-
-      // Update room's last message
-      await setDoc(
-        roomRef,
-        {
-          lastMessage: message,
-          lastMessageTimestamp: timeCreated,
-          lastMessageSenderId: user?.userId,
-        },
-        { merge: true }
-      );
-
-      // Send notification
-      if (otherUserToken) {
-        sendNotification(
-          otherUserToken,
-          `New message from ${user?.username}`,
-          message,
-          roomId
-        );
-      }
-
-      // Update message delivery status
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === newMessage.id ? { ...msg, delivered: true } : msg
-        )
-      );
-    } catch (error) {
-      console.error("Failed to send message:", error);
-      // Mark message as failed
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === newMessage.id ? { ...msg, delivered: false } : msg
-        )
-      );
-    }
-    updateScrollToEnd();
-  };
-
-  const renderMessage = ({ item }) => (
-    <MessageObject
-      item={item}
-      onReply={handleReply}
-      onReplyPress={scrollToMessage}
-      onRetry={retrySendMessage}
-      scrollToMessage={scrollToMessage}
-      isReferenceMessage={item.id === highlightedMessageId}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      theme={selectedTheme}
-    />
-  );
-
-  const handleEdit = (message) => {
-    setScrollToEnButton(false);
-    cancelReply();
-    setEditingMessage(message);
-    setInputText(message.content);
-    inputRef.current.focus();
-  };
-
-  const cancelEditing = () => {
-    setEditingMessage(null);
-    setInputText("");
-    Keyboard.dismiss();
-  };
-
-  const saveEditedMessage = async () => {
-    if (!editingMessage) return;
-
-    const updatedMessage = {
-      ...editingMessage,
-      content: inputText,
-      editedAt: getCurrentTime(),
-    };
-
-    try {
-      const roomRef = doc(db, "rooms", roomId);
-      const messageRef = doc(roomRef, "messages", editingMessage.id);
-
-      await updateDoc(messageRef, updatedMessage);
-
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === editingMessage.id ? updatedMessage : msg
-        )
-      );
-
-      setEditingMessage(null);
-      setInputText("");
-    } catch (error) {
-      console.error("Failed to edit message", error);
-    }
-  };
 
   const handleDelete = async (message) => {
     Alert.alert(
@@ -510,12 +168,13 @@ const ChatScreen = () => {
           onPress: async () => {
             try {
               const roomRef = doc(db, "rooms", roomId);
-              const messageRef = doc(roomRef, "messages", message.id);
+              const messageRef = doc(roomRef, "messages", message._id);
 
               await deleteDoc(messageRef);
 
-              setMessages((prevMessages) =>
-                prevMessages.filter((msg) => msg.id !== message.id)
+              setMessages(
+                (prevMessages) =>
+                  prevMessages.filter((msg) => msg._id !== message._id)
               );
             } catch (error) {
               console.error("Failed to delete message", error);
@@ -526,52 +185,158 @@ const ChatScreen = () => {
     );
   };
 
-  const handleReply = (message) => {
-    setScrollToEnButton(false);
-    cancelEditing();
-    setReplyTo({
-      id: message.id,
-      content: message.content,
-      senderId: message.senderId,
-      senderName: message.senderName,
-    });
-    inputRef.current.focus();
+  useEffect(() => {
+    const markMessagesAsRead = async () => {
+      const roomRef = doc(db, "rooms", roomId);
+      const messagesRef = collection(roomRef, "messages");
+      const unreadMessagesQuery = query(
+        messagesRef,
+        where("senderId", "!=", user.userId),
+        where("read", "==", false)
+      );
+
+      const snapshot = await getDocs(unreadMessagesQuery);
+      const batch = writeBatch(db);
+
+      snapshot.forEach((doc) => {
+        batch.update(doc.ref, { read: true });
+      });
+
+      if (!snapshot.empty) {
+        await batch.commit();
+      }
+    };
+
+    markMessagesAsRead();
+  }, [roomId, user.userId, messages]);
+
+  const handlePress = useCallback(
+    (context, currentMessage) => {
+      if (!currentMessage.text) return;
+
+      const options = [];
+
+      if (currentMessage.user._id === user.userId) {
+        options.push("Copy text");
+        options.push("Edit Message");
+        options.push("Delete message");
+      } else {
+        options.push("Copy text");
+      }
+      options.push("Cancel");
+      const cancelButtonIndex = options.length - 1;
+
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        (buttonIndex) => {
+          switch (buttonIndex) {
+            case 0:
+              Clipboard.setStringAsync(currentMessage.text);
+              break;
+            case 1:
+              if (currentMessage.user._id === user.userId) {
+                setIsEditing(true);
+                setEditMessage(currentMessage);
+                setEditText(currentMessage.text);
+              }
+              break;
+            case 2:
+              if (currentMessage.user._id === user.userId)
+                handleDelete(currentMessage);
+              break;
+            default:
+              break;
+          }
+        }
+      );
+    },
+    [user.userId, handleDelete, isEditing]
+  );
+
+  const handleEditSave = async () => {
+    if (!editMessage || !editText) return;
+
+    try {
+      const roomRef = doc(db, "rooms", roomId);
+      const messageRef = doc(roomRef, "messages", editMessage._id);
+
+      await updateDoc(messageRef, { content: editText });
+
+      setEditText("");
+      setEditMessage(null);
+      setIsEditing(false);
+
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === editMessage._id ? { ...msg, text: editText } : msg
+        )
+      );
+    } catch (error) {
+      console.error("Failed to edit message:", error);
+      Alert.alert("Error", "Failed to edit message. Please try again.");
+    }
   };
 
-  const cancelReply = () => {
-    setReplyTo(null);
-    Keyboard.dismiss();
-  };
+  const renderBubble = (props) => {
+    const { currentMessage } = props;
 
-  const getItemLayout = isFirstRender
-    ? (data, index) => ({
-        length: 100,
-        offset: 100 * index,
-        index,
-      })
-    : undefined;
+    let ticks = null;
+    if (currentMessage.user._id === user.userId) {
+      // Only for user's messages
+      if (currentMessage.read) {
+        ticks = (
+          <Text
+            style={{
+              fontSize: 12,
+              color: selectedTheme.secondary,
+              paddingRight: 5,
+            }}
+          >
+            ✓✓
+          </Text>
+        );
+      } else if (currentMessage.delivered) {
+        ticks = (
+          <Text
+            style={{
+              fontSize: 12,
+              color: selectedTheme.secondary,
+              paddingRight: 5,
+            }}
+          >
+            ✓
+          </Text>
+        ); 
+      }
+    }
+
+    return (
+      <Bubble
+        {...props}
+        renderTicks={() => ticks}
+        wrapperStyle={{
+          left: {
+            backgroundColor: selectedTheme.message.other.background,
+          },
+          right: {
+            backgroundColor: selectedTheme.message.user.background,
+          },
+        }}
+      />
+    );
+  };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor:
-          selectedTheme === darkTheme ? selectedTheme.background : null,
-      }}
-    >
-      {/* Background picture for chat screen */}
+    <View style={{ flex: 1 }}>
       <ChatRoomBackground source={chatBackgroundPic} />
-
       <StatusBar
-        style={
-          selectedTheme === purpleTheme
-            ? "light"
-            : selectedTheme.Statusbar.style
-        }
+        style={selectedTheme === "dark" ? "light" : "dark"}
         backgroundColor={selectedTheme.primary}
         animated={true}
       />
-
       <View style={{ position: "absolute", zIndex: 5, width: "100%" }}>
         <TopHeaderBar
           theme={selectedTheme}
@@ -580,119 +345,103 @@ const ChatScreen = () => {
         />
       </View>
       <View style={styles.crContainer}>
-        <SectionList
-          ref={sectionListRef}
-          sections={messagesSections}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          renderSectionHeader={renderSectionHeader}
-          contentContainerStyle={styles.crMessages}
-          showsVerticalScrollIndicator={false}
-          maxToRenderPerBatch={15}
-          updateCellsBatchingPeriod={40}
-          windowSize={21}
-          initialNumToRender={15}
-          onEndReachedThreshold={0.5}
-          stickySectionHeadersEnabled={true}
-          stickyHeaderHiddenOnScroll={true}
-          onScrollBeginDrag={() => setScrollToEnButton(true)}
-          onEndReached={() => setScrollToEnButton(false)}
-          //Uncomment to aid initial scroll to index
-          getItemLayout={getItemLayout}
-          initialScrollIndex={
-            firstUnreadIndex !== null ? firstUnreadIndex : messages.length - 1
+        <GiftedChat
+          messagesContainerStyle={styles.crMessages}
+          keyboardShouldPersistTaps="never"
+          minComposerHeight={55}
+          alwaysShowSend={true}
+          renderComposer={(props) =>
+            isEditing ? (
+              <View style={styles.editContainer}>
+                <TextInput
+                  value={editText}
+                  onChangeText={setEditText}
+                  style={styles.editInput}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  onPress={handleEditSave}
+                  style={styles.editButton}
+                >
+                  <Text style={styles.editButtonText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setIsEditing(false)}
+                  style={styles.editButton}
+                >
+                  {/* {" "} */}
+                  <Text style={styles.editButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Composer
+                {...props}
+                textInputStyle={{ color: selectedTheme.text.primary }}
+              />
+            )
           }
-          onScrollToIndexFailed={(info) => {
-            const wait = new Promise((resolve) => setTimeout(resolve, 500));
-            wait.then(() => {
-              sectionListRef.current?.scrollToLocation({
-                sectionIndex: info.index, 
-                itemIndex: 0,
-                animated: true,
-              });
-            });
+          messages={messages}
+          onSend={(newMessages) => handleSend(newMessages)}
+          user={{
+            _id: user.userId,
+            name: user.username,
           }}
-          ListEmptyComponent={<EmptyChatRoomList />}
-        />
-        {scrollToEnButton && (
-          <View style={styles.crScrollToEndButton}>
-            <TouchableOpacity onPress={updateScrollToEnd}>
-              <MaterialIcons name="double-arrow" color={"white"} size={30} />
-            </TouchableOpacity>
-          </View>
-        )}
-        {replyTo && (
-          <View style={styles.crReplyPreview}>
-            <View style={styles.crReplyPreviewContent}>
-              <Text style={styles.crReplyPreviewName}>
-                Replying to{" "}
-                {replyTo.senderId === user?.userId
-                  ? "yourself"
-                  : replyTo.senderName}
-              </Text>
-              <Text numberOfLines={1} style={styles.cdReplyPreviewText}>
-                {replyTo.content}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={cancelReply}>
-              <MaterialIcons
-                name="close"
-                size={24}
-                color={selectedTheme.primary}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {editingMessage && (
-          <View style={styles.crEditingPreview}>
-            <View>
-              <Text numberOfLines={1} style={styles.crEditingPreviewName}>
-                Editing message
-              </Text>
-              <Text numberOfLines={1} style={styles.crEditingPreviewText}>
-                {editingMessage.content}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={cancelEditing}>
-              <MaterialIcons
-                name="close"
-                size={24}
-                color={selectedTheme.primary}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-        <View style={styles.crInputContainer}>
-          <TextInput
-            ref={inputRef}
-            value={inputText}
-            onChangeText={(text) => {
-              setInputText(text);
-            }}
-            style={styles.crTextInputField}
-            placeholder="Type a message..."
-            placeholderTextColor={
-              selectedTheme === darkTheme ? "lightgrey" : "grey"
-            }
-            numberOfLines={6}
-            multiline={true}
-          />
-          <TouchableOpacity
-            onPress={handleSend}
-            style={styles.crSendButton}
-            activeOpacity={0.1}
-          >
-            <MaterialIcons
-              name="send"
-              color={selectedTheme.text.primary}
-              size={25}
-              style={{
-                transform: [{ rotate: "-50deg" }],
+          renderMessageText={(props) => (
+            <MessageText
+              {...props}
+              textStyle={{
+                left: { color: selectedTheme.message.other.text },
+                right: { color: selectedTheme.message.user.text },
               }}
             />
-          </TouchableOpacity>
-        </View>
+          )}
+          timeTextStyle={{
+            left: { color: selectedTheme.message.other.time },
+            right: { color: selectedTheme.message.user.time },
+          }}
+          renderBubble={renderBubble} // Use the custom renderBubble function
+          renderInputToolbar={(props) => (
+            <InputToolbar
+              {...props}
+              containerStyle={{ backgroundColor: selectedTheme.background }}
+            />
+          )}
+          renderChatEmpty={() => (
+            <View style={{ transform: [{ rotate: "180deg" }], bottom: -300 }}>
+              <EmptyChatRoomList />
+            </View>
+          )}
+          scrollToBottom={true}
+          scrollToBottomComponent={() => (
+            <MaterialIcons
+              style={styles.crScrollToEndButton}
+              name="double-arrow"
+              color={"#000"}
+              size={30}
+            />
+          )}
+          onPress={handlePress}
+          renderAvatar={null}
+          renderSend={(props) => (
+            <Send
+              {...props}
+              disabled={!props.text}
+              containerStyle={{
+                width: 44,
+                height: 44,
+                alignItems: "center",
+                justifyContent: "center",
+                marginHorizontal: 4,
+              }}
+            >
+              <MaterialIcons
+                name="send"
+                color={selectedTheme.text.primary}
+                size={25}
+              />
+            </Send>
+          )}
+        />
       </View>
     </View>
   );

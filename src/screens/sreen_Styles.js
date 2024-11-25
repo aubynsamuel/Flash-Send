@@ -9,12 +9,10 @@ export default getStyles = (theme) => {
     // Chat Room styles
     crContainer: {
       flex: 1,
-      paddingTop: 1,
     },
     crMessages: {
-      paddingHorizontal: 10,
       marginTop: 65,
-      paddingBottom: 65,
+      flex: 1,
     },
     crInputContainer: {
       flexDirection: "row",
@@ -24,7 +22,7 @@ export default getStyles = (theme) => {
       borderColor: theme.border,
       margin: 10,
       borderRadius: 10,
-      zIndex: 2,
+      // zIndex: 2,
       backgroundColor: theme.input.background,
     },
     crTextInputField: {
@@ -41,6 +39,7 @@ export default getStyles = (theme) => {
       backgroundColor: theme.primary,
       justifyContent: "center",
       alignItems: "center",
+      marginRight: 10,
     },
     crReplyPreview: {
       flexDirection: "row",
@@ -67,14 +66,17 @@ export default getStyles = (theme) => {
       fontSize: 12,
       color: theme.primary,
     },
-    crScrollToEndButton: {
-      position: "absolute",
-      bottom: 80,
-      right: 20,
-      borderRadius: 50,
-      justifyContent: "center",
+    crAccessoryContainer: {
+      height: 44,
+      width: "100%",
+      backgroundColor: "white",
+      flexDirection: "row",
+      justifyContent: "space-around",
       alignItems: "center",
-      zIndex: 3,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: "rgba(0,0,0,0.3)",
+    },
+    crScrollToEndButton: {
       transform: [{ rotate: "90deg" }],
     },
     crEditingPreview: {
@@ -103,22 +105,56 @@ export default getStyles = (theme) => {
       backgroundColor: theme.background,
       opacity: 0.8,
       borderRadius: 8,
-      alignSelf: 'center',
-      marginVertical:5
+      alignSelf: "center",
+      marginVertical: 5,
     },
     sectionHeaderText: {
       fontSize: 14,
-      fontWeight: '600',
-      textAlign: 'center',
+      fontWeight: "600",
+      textAlign: "center",
       marginHorizontal: 5,
       marginVertical: 1,
-      color:theme.text.primary
+      color: theme.text.primary,
+    },
+
+
+    // news styles for editing 
+    editContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      backgroundColor: theme.background, // Match the background color of the chat
+      // borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.border,       // Add a subtle border (optional)
+    },
+    editInput: {
+      flex: 1,                                  // Take up remaining space
+      height: 40,                                // Set a fixed height or adjust as needed
+      borderColor: theme.border,        // Match the border color
+      // borderWidth: StyleSheet.hairlineWidth,
+      // borderRadius: 20,                           // Rounded corners
+      paddingHorizontal: 10,
+      marginRight: 10,
+      color: theme.text.primary, // Set text color based on the theme
+    },
+    editButton: {
+      backgroundColor: theme.surface, // Use your secondary color or choose a suitable one
+      borderRadius: 10,
+      paddingHorizontal: 15,
+      marginHorizontal:2,
+      paddingVertical: 4,
+    
+    },
+    editButtonText: {
+      color: theme.primary, // Text color that contrasts with the button background
+      fontWeight: 'bold',
     },
 
     // Edit Profile Screen
     epContainer: {
       flex: 1,
-      padding: 20,
+      padding: 15,
+      paddingTop: 40,
       backgroundColor: theme.background,
     },
     epProfileImage: {
@@ -133,7 +169,7 @@ export default getStyles = (theme) => {
       fontWeight: "bold",
       marginBottom: 20,
       alignSelf: "center",
-      fontSize: 16
+      fontSize: 16,
     },
     epInputField: {
       marginBottom: 20,
@@ -171,7 +207,6 @@ export default getStyles = (theme) => {
     hsContainer: {
       padding: 10,
       paddingBottom: 10,
-      // marginTop: 10,
       backgroundColor: theme === darkTheme ? theme.background : null,
       flex: 1,
     },
@@ -349,6 +384,7 @@ export default getStyles = (theme) => {
       flex: 1,
       backgroundColor: theme.background,
       padding: 15,
+      paddingTop: 40,
     },
     upProfileContainer: {
       alignItems: "center",
@@ -375,7 +411,6 @@ export default getStyles = (theme) => {
       backgroundColor: theme.primary,
       borderRadius: 20,
       marginBottom: 10,
-      // borderWidth: 0.3,
       elevation: 3,
     },
     upOptionText: {

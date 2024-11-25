@@ -19,8 +19,7 @@ const ChatRoomBackground = memo(({ source }) => {
           justifyContent: "center",
           alignSelf: "center",
           width: "100%",
-          height: "115%",
-          top: -25,
+          height: "100%",
         }}
       />
       <View

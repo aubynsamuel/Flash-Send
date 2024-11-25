@@ -41,7 +41,6 @@ const AppContent = () => {
   return (
     <View
       style={{
-        paddingTop: 24,
         flex: 1,
         backgroundColor: selectedTheme.background,
       }}
