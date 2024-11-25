@@ -61,9 +61,6 @@ export default getStyles = (theme) => {
       backgroundColor: theme.screenHeaderBarColor,
       elevation: 10,
       justifyContent: "space-between",
-      borderBottomRightRadius: 30,
-      borderBottomLeftRadius: 30,
-      opacity:0.98,
       overflow: "hidden",
     },
     hcHeaderTitle: {
@@ -110,8 +107,6 @@ export default getStyles = (theme) => {
       elevation: 10,
       height: 65,
       justifyContent: "space-between",
-      borderBottomRightRadius: 30,
-      borderBottomLeftRadius: 30,
     },
     hhHeaderTitle: {
       fontSize: 25,

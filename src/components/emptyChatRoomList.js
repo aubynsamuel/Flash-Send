@@ -4,7 +4,7 @@ import LottieView from "lottie-react-native";
 
 const EmptyChatRoomList = () => {
   return (
-    <View style={{ flex: 1, marginTop: 35 }}>
+    <View style={{ flex: 1, }}>
       <LottieView
         source={require("../../myAssets/Lottie_Files/Animation - 1730912642416.json")}
         autoPlay

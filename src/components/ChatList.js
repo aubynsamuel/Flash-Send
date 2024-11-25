@@ -18,7 +18,6 @@ const ChatList = memo(({ rooms, isLoading, onRefresh, theme }) => {
       data={rooms}
       renderItem={({ item }) => <ChatObject room={item} theme={theme} />}
       keyExtractor={(item, index) => item.roomId || index.toString()}
-      // onPress={() => navigation.navigate('ChatScreen')}
       ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
       refreshControl={
         <RefreshControl

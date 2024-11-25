@@ -121,6 +121,7 @@ function HomeScreen() {
     <SafeAreaView
       style={{
         flex: 1,
+        paddingTop: 24,
         backgroundColor:
           selectedTheme === darkTheme ? selectedTheme.background : null,
       }}

@@ -100,7 +100,7 @@ export const AuthContextProvider = ({ children }) => {
       if (msg.includes("(auth/invalid-credential)"))
         msg = "Invalid Credentials";
       if (msg.includes("(auth/network-request-failed)"))
-        msg = "Please check your internet connection and try again.";
+        msg = "No internet connection";
       return { success: false, msg };
     }
   };
@@ -178,7 +178,7 @@ export const AuthContextProvider = ({ children }) => {
       if (msg.includes("(auth/invalid-credential)"))
         msg = "Invalid Credentials";
       if (msg.includes("(auth/network-request-failed)"))
-        msg = "Please check your internet connection and try again.";
+        msg = "No internet connection";
       return { success: false, msg };
     }
   };
@@ -229,7 +229,7 @@ export const AuthContextProvider = ({ children }) => {
       let msg = error.message;
       if (msg.includes("(auth/invalid-email)")) msg = "Invalid Email";
       if (msg.includes("(auth/network-request-failed)"))
-        msg = "Please check your internet connection and try again.";
+        msg = "No internet connection";
       if (msg.includes("(auth/email-already-in-use)"))
         msg = "Email Already In Use";
       return { success: false, msg };

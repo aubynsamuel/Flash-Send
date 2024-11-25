@@ -67,13 +67,13 @@ const LoginScreen = () => {
     <SafeAreaView
       style={{
         flex: 1,
+        paddingTop: 24,
         backgroundColor:
           selectedTheme === darkTheme ? selectedTheme.background : null,
       }}
     >
       <StatusBar
         style={`${selectedTheme.Statusbar.style}`}
-        // backgroundColor={selectedTheme.Statusbar.backgroundColor}
         animated={true}
       />
       <LottieView
