@@ -1,5 +1,5 @@
 import React, { memo, useState } from "react";
-import { TouchableOpacity, View, Dimensions } from "react-native";
+import { TouchableOpacity, View, Dimensions, Keyboard } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Menu, MenuOptions, MenuTrigger } from "react-native-popup-menu";
 import Animated, {
@@ -64,7 +64,7 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
     height: interpolate(gestureProgress.value, [0, 1], [45, MAX_HEADER_HEIGHT]),
     borderRadius: interpolate(gestureProgress.value, [0, 1], [30, 0]),
   }));
-  
+
   const animatedImageContainerStyle = useAnimatedStyle(() => ({
     transform: [
       {
@@ -87,8 +87,10 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
         {/* Back Button */}
         <Animated.View style={animatedButtonStyle}>
           <AnimatedTouchableOpacity
-            onPress={() => navigation.goBack()}
-            entering={FadeInLeft.duration(500)}
+            onPress={() => {
+              Keyboard.dismiss();
+              navigation.goBack();
+            }}
           >
             <MaterialIcons
               name="arrow-back"
@@ -100,7 +102,7 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
         </Animated.View>
 
         {/* Header Title */}
-        <Animated.View entering={FadeInLeft.duration(300)}>
+        <Animated.View>
           <Animated.Text style={[styles.hcHeaderTitle, animatedTitleStyle]}>
             {title}
           </Animated.Text>
@@ -117,7 +119,6 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
                 {imageFailed || !profileUrl ? (
                   <Animated.View style={[animatedImageContainerStyle]}>
                     <Animated.Image
-                      entering={FadeInLeft.duration(300)}
                       style={[styles.hcAvatar, animatedImageStyle]}
                       source={require("../../myAssets/Images/default-profile-picture-avatar-photo-600nw-1681253560.webp")}
                     />
@@ -125,7 +126,6 @@ const TopHeaderBar = memo(({ title, profileUrl, theme }) => {
                 ) : (
                   <Animated.View style={[animatedImageContainerStyle]}>
                     <Animated.Image
-                      entering={FadeInLeft.duration(300)}
                       style={[styles.hcAvatar, animatedImageStyle]}
                       source={{ uri: profileUrl }}
                       onError={() => setImageFailed(true)}
