@@ -11,6 +11,7 @@ import userProfileScreen from "../screens/userProfileScreen";
 import SearchUsersScreen from "../screens/searchUsersScreen";
 import LottieView from "lottie-react-native";
 import { useTheme } from "../ThemeContext";
+import IntermediaryScreen from "../screens/intermidiaryScreen";
 
 const Stack = createStackNavigator();
 
@@ -55,7 +56,8 @@ const Navigator = () => {
       <Stack.Screen name="Search_Users" component={SearchUsersScreen} />
       <Stack.Screen name="UserProfile" component={userProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-      <Stack.Screen name="ChatScreen" component={ChatScreen} />
+      <Stack.Screen name="Inter" component={IntermediaryScreen} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen}/>
     </Stack.Navigator>
   );
 };

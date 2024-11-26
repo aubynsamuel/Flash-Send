@@ -1,5 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { View, Text, Alert, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+  BackHandler,
+} from "react-native";
 import {
   GiftedChat,
   InputToolbar,
@@ -37,19 +44,35 @@ import { MaterialIcons } from "@expo/vector-icons";
 import getStyles from "./sreen_Styles";
 import * as Clipboard from "expo-clipboard";
 import EmptyChatRoomList from "../components/EmptyChatRoomList";
+import { useNavigation } from "@react-navigation/native";
 
 const ChatScreen = () => {
+  const navigation = useNavigation();
   const route = useRoute();
   const { userId, username, profileUrl } = route.params;
   const { user } = useAuth();
   const { selectedTheme, chatBackgroundPic } = useTheme();
   const [messages, setMessages] = useState([]);
   const [otherUserToken, setOtherUserToken] = useState("");
-  const roomId = getRoomId(user.userId, userId);
+  const roomId = getRoomId(user?.userId, userId);
   const styles = getStyles(selectedTheme);
   const [isEditing, setIsEditing] = useState(false);
   const [editMessage, setEditMessage] = useState(null);
   const [editText, setEditText] = useState("");
+
+  const onHardwareBackPress = () => {
+    navigation.navigate("Inter");
+    // navigation.replace("Home");
+    return true;
+  };
+
+  useEffect(() => {
+    const handleBackPress = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onHardwareBackPress
+    );
+    return () => handleBackPress.remove();
+  }, []);
 
   useEffect(() => {
     const roomRef = doc(db, "rooms", roomId);
@@ -333,7 +356,11 @@ const ChatScreen = () => {
     <View style={{ flex: 1 }}>
       <ChatRoomBackground source={chatBackgroundPic} />
       <StatusBar
-        style={selectedTheme === "dark" ? "light" : "dark"}
+        style={`${
+          selectedTheme === purpleTheme
+            ? "light"
+            : selectedTheme.Statusbar.style
+        }`}
         backgroundColor={selectedTheme.primary}
         animated={true}
       />
